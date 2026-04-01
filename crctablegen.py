@@ -26,7 +26,7 @@ def main() -> tuple[Namespace, Callable[[], None]]:
     col_row_opts    =   form.add_mutually_exclusive_group()
 
     #  Generator polygon specific args
-    poly.add_argument("-p", "--polynomial", type=polynomial, metavar="POLYNOMIAL", 
+    poly.add_argument("-p", "--polynomial", type=polynomial, metavar="HEX",
                       dest="poly", help="the hexadecimal representation of chosen polynomial")
 
     poly.add_argument("-d", "--degree", type=int, metavar="INT", dest="degree", default=32,
