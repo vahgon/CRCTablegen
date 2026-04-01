@@ -7,6 +7,7 @@ from io import StringIO
 from itertools import zip_longest
 from pathlib import Path
 from re import sub
+from shutil import copyfileobj
 from typing import override
 
 from polynomials import (
@@ -87,6 +88,14 @@ def gen_table(args: Namespace) -> None:
     table = output_table(crc_gen_func(poly=args.poly), args)
 
     logger.info(" - Successfully generated lookup table!")
+
+    if args.output:
+        logger.info(" - Printing table to file...")
+        with open(args.output, 'w') as fd:
+            table.seek(0)
+            copyfileobj(table, fd)
+    else:
+        print(table.getvalue())
     return
 
 def output_table(crc_table: Array[UnsignedInt], args: Namespace) -> StringIO:
