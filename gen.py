@@ -3,6 +3,7 @@ from argparse import Namespace
 from ctypes import Array, sizeof
 from dataclasses import dataclass, fields
 from functools import partial
+from io import StringIO
 from itertools import zip_longest
 from pathlib import Path
 from re import sub
@@ -72,38 +73,45 @@ def gen_table(args: Namespace) -> None:
         args.poly = [DefaultPoly, DefaultRevPoly][args.reflected][args.degree]
 
     getopts: TableGenOpts = TableGenOpts(c_typ, args.poly)
+
     logger.info(" - Generator polygon set as '%s'" % getopts)
     logger.info(" - Type of array elements set to be '%s'" % c_typ_str)
+
     logger.info(" - Generating CRC lookup table...")
-    output_table(crc_gen_func(poly=args.poly), args)
+    table = output_table(crc_gen_func(poly=args.poly), args)
 
     logger.info(" - Successfully generated lookup table!")
     return
 
-def output_table(crc_table: Array[UnsignedInt], args: Namespace) -> None:
+def output_table(crc_table: Array[UnsignedInt], args: Namespace) -> StringIO:
+    """
+    Table buffer creation
+
+    :ret: `StringIO` of formatted table
+    """
     logger.info(" - Retrieving and preparing set formatting args...")
+
     width       = max(len(f'{hex:x}') for hex in crc_table)
-    indent      = (int(args.indent) * " " if args.indent != 4 else "\t") if args.indent else ""
     arr_list    = [(f'{hex:#0{width+2}x}' if args.prefix else f'{hex:0{width}x}') for hex in crc_table]
     cr_val      = args.rlen if args.rlen else (1 if args.vert else (len(arr_list) if args.hori else 8))
+    indent      = (int(args.indent) * " " if args.indent != 4 else "\t") if args.indent else ""
     trail_ws    = sub(pattern=r'\s*', repl='', string=args.sep)
+
+    rows        = zip_longest(*[iter(arr_list)] * cr_val, fillvalue=args.sep)
+    textio      = StringIO()
 
     if args.container:
         args.container = { 'b': ["[", "]"], 'c': ["{", "}"] }[args.container]
 
-    rows = zip_longest(*[iter(arr_list)] * cr_val, fillvalue=args.sep)
+    logger.info(" - Formatting table...")
+    if args.container:
+        textio.writelines(args.container[0] + '\n')
 
-    logger.info(" - Writing output to '%s'" % Path(args.output).absolute())
-    with open(args.output, 'w') as rf:
-        if args.container:
-            rf.writelines(args.container[0] + '\n')
+    for row in rows:
+        textio.writelines(f'{indent}' + args.sep.join(hex for hex in row if row != ''))
+        textio.writelines(trail_ws + '\n')
 
-        for row in rows:
-            rf.writelines(f'{indent}' + args.sep.join(hex for hex in row if row != ''))
-            rf.writelines(trail_ws + '\n')
+    if args.container:
+        textio.writelines(args.container[1])
 
-        if args.container:
-            rf.writelines(args.container[1])
-
-        rf.close()
-    return
+    return textio
