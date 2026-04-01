@@ -65,9 +65,9 @@ def gen_table(args: Namespace) -> None:
     crc_gen_func: partial[Array[UnsignedInt]] = partial([gen_crc, rgen_crc][args.reflected], uint_type=c_typ)
 
     if args.poly is None:
-        logger.info(" - No generator polygon provided. Using default values for "
-                    + ("LSB" if args.reflected else "MSB") +
-                    " implementation of degree %s" % args.degree)
+        logger.info(" - No generator polygon provided. Using default values for the "
+                 + ("LSB" if args.reflected else "MSB") +
+                    " implementation of CRC%s" % args.degree)
 
         args.poly = [DefaultPoly, DefaultRevPoly][args.reflected][args.degree]
 
