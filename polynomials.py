@@ -1,15 +1,19 @@
-from ctypes import c_uint8, c_uint16, c_uint32
-
-from enum import IntEnum
+from ctypes import c_ubyte, c_uint16, c_uint32
 from typing import Any, TypeAlias
 
-UnsignedInt:   TypeAlias = (c_uint32 | c_uint16 | c_uint8)
-unsigned_type: TypeAlias = Any  # alias for type hints
+UnsignedInt:    TypeAlias = (c_uint32 | c_uint16 | c_ubyte)
+Unsigned_types: TypeAlias = Any  # c Array hinting in tablegen.py
 
-n_crc = {
-     8:   (c_uint8,   'uint8_t', 0x31,       '0x31'),
-    16:   (c_uint16, 'uint16_t', 0x1021,     '0x1021'),
-    32:   (c_uint32, 'uint32_t', 0x04c11db7, '0x04c11db7'),
+C_DataTypes = {
+    8:      ( c_ubyte,   'uint8_t' ),
+    16:     ( c_uint16, 'uint16_t' ),
+    32:     ( c_uint32, 'uint32_t' ),
+}
+
+DefaultPoly = {
+     8:     0x31,
+    16:     0x1021,
+    32:     0x04c11db7,
 }
 """
 Generator polynomials for: 
@@ -18,10 +22,10 @@ Generator polynomials for:
     - CRC32 `x^32 + x^26 + x^23 + ... + x^2 + x + 1` (File formats/compression, etc...)
 """
 
-r_crc = {
-     8:   (c_uint8,   'uint8_t', 0x8c,       '0x8c'),
-    16:   (c_uint16, 'uint16_t', 0x8408,     '0x8408'),
-    32:   (c_uint32, 'uint32_t', 0xedb88320, '0xedb88320'),
+DefaultRevPoly = {
+     8:     0x8c,
+    16:     0x8408,
+    32:     0xedb88320,
 }
 """
 Bit-reversed generator polynomials for:
@@ -29,9 +33,3 @@ Bit-reversed generator polynomials for:
     - CRC16 `x^16 + x^12 + x^5 + 1`                  (x.25 ITU-T protocol)
     - CRC32 `x^32 + x^26 + x^23 + ... + x^2 + x + 1` (File formats/compression, etc...)
 """
-
-class ByteEnum(IntEnum):
-    TYPE        = 0
-    TYPE_STR    = 1
-    HEX         = 2
-    HEX_STR     = 3
