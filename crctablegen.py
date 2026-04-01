@@ -19,9 +19,11 @@ def polynomial(poly_str: str) -> int:
 def main() -> tuple[Namespace, Callable[[], None]]:
     parser  =   ArgumentParser(prog="crctablegen.py", color=False, add_help=False)
 
-    core    =   parser.add_argument_group()
-    poly    =   parser.add_argument_group("polygon opts")
-    form    =   parser.add_argument_group("formatting opts")
+    core            =   parser.add_argument_group()
+    poly            =   parser.add_argument_group("polygon opts")
+    form            =   parser.add_argument_group("formatting opts")
+
+    col_row_opts    =   form.add_mutually_exclusive_group()
 
     #  Generator polygon specific args
     poly.add_argument("-p", "--polynomial", type=polynomial, metavar="POLYNOMIAL", 
@@ -34,16 +36,26 @@ def main() -> tuple[Namespace, Callable[[], None]]:
                       help="use the LSB implementation when computing table")
 
     #  Formatting args
-    form.add_argument("--json", dest="json", action="store_true", help="convert table to json")
+    form.add_argument("-c", "--container", metavar="CHAR", dest="container", choices=['b', 'c'],
+                      help="surround entire table in CHAR. choose from ['b'racket, 'c'urly].")
+
+    form.add_argument("-s", "--separator", type=str, metavar="CHAR(S)", dest="sep", default=" ",
+                      help="will separate every byte in hex table elements with CHAR(S).")
+
+    form.add_argument("-i", "--indent", type=str, metavar="INT", dest="indent",
+                      help="specify indentation amount. (4 = tab char, default = 0)")
 
     form.add_argument("--prefix", dest="prefix", action='store_true',
                       help="append `0x` to all table elements")
 
-    form.add_argument("--container", metavar="CHAR", dest="container", choices=['b', 'c'],
-                      help="surround entire table in CHAR. choose from ['b'racket, 'c'urly].")
+    col_row_opts.add_argument("--horizontal", action="store_true", dest="hori",
+                              help="output all values on the same line")
 
-    form.add_argument("--separator", type=str, metavar="CHAR", dest="sep",
-                      help="will separate every byte in hex table elements with CHAR.")
+    col_row_opts.add_argument("--vertical", action="store_true", dest="vert",
+                              help="output all calculated values on a newline")
+
+    col_row_opts.add_argument("--row-len", type=int, metavar="INT", dest='rlen',
+                              help="specify # of elements to print before appending a newline")
 
     #  Core args
     core.add_argument("-o", "--output", type=Path, metavar="FILE", dest="output",

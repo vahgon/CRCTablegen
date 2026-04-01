@@ -1,4 +1,3 @@
-import json
 import logging
 from argparse import Namespace
 from ctypes import Array, sizeof
@@ -97,22 +96,9 @@ def output_table(crc_table: Array[UnsignedInt], args: Namespace) -> None:
             out_table+=(f'{hex}, ')
 
     logger.info(" - Writing output to '%s'" % Path(args.output).absolute())
-    if args.output:
-        with open(args.output,'w') as rf:
-            rf.write(out_table)
-            rf.close()
-
-    if args.json:
-        output_json(arr_list, args.output)
-
-def output_json(arr_list: list[str], output: Path) -> None:
-    io_text: (TextIOWrapper | str | None)
-
-    path = Path(output).with_suffix('.json')
-
-    if path.exists():
-        logger.warning(" - '%s' already exists, ignoring '--json'" % path.absolute())
-        return
+    with open(args.output, 'w') as rf:
+        if args.container:
+            rf.writelines(args.container[0] + '\n')
 
     logger.info("Creating new json file in write mode...")
     io_text = path.open('w')
@@ -120,6 +106,5 @@ def output_json(arr_list: list[str], output: Path) -> None:
     logger.info("Writing json file to %s..." % path)
     json.dump(arr_list, io_text, indext=4)
 
-    io_text.close()
-    
+        rf.close()
     return
