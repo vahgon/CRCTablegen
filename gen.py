@@ -20,6 +20,9 @@ from polynomials import (
 logger = logging.getLogger(__name__)
 
 def gen_crc(uint_type: type[UnsignedInt], poly: int) -> Array[UnsignedInt]:
+    """
+    MSB implementation
+    """
     crc_arr:    Array[Unsigned_types] = (uint_type * 256)(*range(256))
     b_count:    int = sizeof(uint_type) * 8
 
@@ -32,6 +35,9 @@ def gen_crc(uint_type: type[UnsignedInt], poly: int) -> Array[UnsignedInt]:
     return crc_arr
 
 def rgen_crc(uint_type: type[UnsignedInt], poly) -> Array[UnsignedInt]:
+    """
+    LSB implementation (reflected poly)
+    """
     crc_arr: Array[Unsigned_types] = (uint_type * 256)(*range(256))
 
     for ubyts in crc_arr:
@@ -45,7 +51,7 @@ def rgen_crc(uint_type: type[UnsignedInt], poly) -> Array[UnsignedInt]:
 def gen_table(args: Namespace) -> None:
     """
     First need to determine whether we are using the LSB or MSB implementation.
-    Default will be `gen_crc`() - the MSB implementation - left shifts.
+    Default will be `gen_crc`() - the MSB implementation - left shift operations.
     """
     @dataclass()
     class TableGenOpts:
