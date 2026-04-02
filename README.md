@@ -104,7 +104,7 @@ If `--reflect-poly` is set without `--polynomial`, then the generator polynomial
 
 Lets create a table using some of the options talked about in [Detailed Usage](#detailed-usage).
 
-To create a table using the reflected Castagnoli CRC-32 generator polynomial with row indents set to 2 spaces, the table contained in curly braces, table elements separated by a comma and space (`, `), the maximum number of columns for any given row set to 10, table elements prefixed with **0x**, and the result saved to "crc32c_result":
+To create a table using the reflected Castagnoli CRC-32 generator polynomial with row indents set to 2 spaces, the table contained in brackets, table elements separated by a comma and space (`, `), the maximum number of columns for any given row set to 10, table elements prefixed with **0x**, and the result saved to "crc32c_result":
 
   ```
   $ ./crctablegen.py -r -p 0x82F63B78 --indent 2 -c b -s ", " --row-len 10 --prefix -o crc32c_result
