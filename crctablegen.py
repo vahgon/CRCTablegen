@@ -138,7 +138,7 @@ def output_table(crc_table: Array[UnsignedInt], args: Namespace) -> StringIO:
     indent      = (int(args.indent) * " " if args.indent != 4 else "\t") if args.indent else ""
     trail_ws    = sub(pattern=r'\s*', repl='', string=args.sep)
 
-    rows        = zip_longest(*[iter(arr_list)] * cr_val, fillvalue=args.sep)
+    rows        = zip_longest(*[iter(arr_list)] * cr_val, fillvalue=None)
     textio      = StringIO()
 
     if args.container:
@@ -149,7 +149,7 @@ def output_table(crc_table: Array[UnsignedInt], args: Namespace) -> StringIO:
         textio.writelines(args.container[0] + '\n')
 
     for row in rows:
-        textio.writelines(f'{indent}' + args.sep.join(hex for hex in row if row != ''))
+        textio.writelines(f'{indent}' + args.sep.join(hex for hex in row if hex is not None))
         textio.writelines(trail_ws + '\n')
 
     if args.container:
