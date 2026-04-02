@@ -96,7 +96,8 @@ def gen_table(args: Namespace) -> None:
     c_typ:     type[UnsignedInt]
     c_typ_str: str
 
-    (c_typ, c_typ_str)  = C_DataTypes[args.degree]
+    (c_typ, c_typ_str) = C_DataTypes[args.degree]
+
     crc_gen_func: partial[Array[UnsignedInt]] = partial([gen_crc, rgen_crc][args.reflected], uint_type=c_typ)
 
     if args.poly is None:
@@ -165,7 +166,7 @@ def polynomial(poly_str: str) -> int:
     return poly
 
 def main() -> tuple[Namespace, Callable[[], None]]:
-    parser  =   ArgumentParser(prog="crctablegen.py", color=False, add_help=False)
+    parser          =   ArgumentParser(prog="crctablegen.py", color=False, add_help=False)
 
     core            =   parser.add_argument_group()
     poly            =   parser.add_argument_group("polygon opts")
