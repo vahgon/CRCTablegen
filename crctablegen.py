@@ -141,8 +141,9 @@ def gen_table(args: Namespace) -> None:
     crc_table = crc_gen_func(poly=args.poly)
     logger.info(" - Successfully generated lookup table!")
 
-    table: StringIO
-    
+    table:      StringIO
+    crc_tables: SlicedTables | None = None
+
     if args.slice4 or args.slice8:
         crc_tables = gen_slice_table(uint_type=c_typ, t=crc_table, args=args)
 
@@ -150,11 +151,24 @@ def gen_table(args: Namespace) -> None:
         logger.info(" - Printing to file...")
 
         with open(args.output, 'w') as fd:
-            table.seek(0)
-            copyfileobj(table, fd)
+            if crc_tables:
+                for arr in crc_tables:
+                    table = output_table(arr, args)
+                    table.seek(0)
+                    copyfileobj(table, fd)
+            else:
+                table = output_table(crc_table, args)
+                table.seek(0)
+                copyfileobj(table, fd)
+
     else:
-        table = output_table(crc_table, args)
-        print(table.getvalue())
+        if crc_tables:
+            for arr in crc_tables:
+                table = output_table(arr, args)
+                print(table.getvalue())
+        else:
+            table = output_table(crc_table, args)
+            print(table.getvalue())
 
     return  # Success...
 
