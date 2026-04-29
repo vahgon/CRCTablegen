@@ -14,8 +14,12 @@ from typing import Any, Callable, TypeAlias, override
 
 logger = logging.getLogger(__name__)
 
-UnsignedInt:    TypeAlias = (c_uint32 | c_uint16 | c_ubyte)
-Unsigned_types: TypeAlias = Any  # for c Array type hinting 
+UnsignedInt:   TypeAlias = (c_uint32 | c_uint16 | c_ubyte)
+UnsignedTypes: TypeAlias = Any  # for c Array type hinting 
+UIntType:      TypeAlias = type[UnsignedInt]
+
+CRCTable:      TypeAlias = Array[UnsignedInt]
+SlicedArrays:  TypeAlias = list[Array[UnsignedTypes]]
 
 C_DataTypes = {
     8:      ( c_ubyte,   'uint8_t' ),
@@ -49,9 +53,9 @@ Bit-reversed generator polynomials for:
 
 def gen_crc(uint_type: type[UnsignedInt], poly: int) -> Array[UnsignedInt]:
     """
-    MSB implementation
+    Big-Endian implementation
     """
-    crc_arr:    Array[Unsigned_types] = (uint_type * 256)(*range(256))
+    crc_arr:    Array[UnsignedTypes] = (uint_type * 256)(*range(256))
     b_count:    int = sizeof(uint_type) * 8
 
     for ubyts in crc_arr:
@@ -64,9 +68,9 @@ def gen_crc(uint_type: type[UnsignedInt], poly: int) -> Array[UnsignedInt]:
 
 def rgen_crc(uint_type: type[UnsignedInt], poly) -> Array[UnsignedInt]:
     """
-    LSB implementation (reflected generator)
+    Little-Endian implementation (reflected generator)
     """
-    crc_arr: Array[Unsigned_types] = (uint_type * 256)(*range(256))
+    crc_arr: Array[UnsignedTypes] = (uint_type * 256)(*range(256))
 
     for ubyts in crc_arr:
         crc = ubyts
@@ -75,6 +79,28 @@ def rgen_crc(uint_type: type[UnsignedInt], poly) -> Array[UnsignedInt]:
         crc_arr[ubyts] = crc
 
     return crc_arr
+
+def gen_slice_table(uint_type: type[UnsignedInt], t: Array[UnsignedInt], args: Namespace) -> SlicedArrays:
+    """
+    Function to generate tables for slice-by-4 and slice-by-8 implementations
+    """
+    num_tables:   int            = 7 if args.slice8 else 3
+    slice_tables: SlicedArrays = [((uint_type * 256)(*range(256)))] * num_tables
+
+    slice_tables[0] = t
+
+    for cell in range(256):
+        slice_tables[1][cell] = (slice_tables[0][cell] >> 8) ^ slice_tables[0][slice_tables[0][cell]] & 0xff
+        slice_tables[2][cell] = (slice_tables[1][cell] >> 8) ^ slice_tables[0][slice_tables[1][cell]] & 0xff
+        slice_tables[3][cell] = (slice_tables[2][cell] >> 8) ^ slice_tables[0][slice_tables[2][cell]] & 0xff
+
+        if num_tables == 7:
+            slice_tables[4][cell] = (slice_tables[3][cell] >> 8) ^ slice_tables[0][slice_tables[3][cell]] & 0xff
+            slice_tables[5][cell] = (slice_tables[4][cell] >> 8) ^ slice_tables[0][slice_tables[4][cell]] & 0xff
+            slice_tables[6][cell] = (slice_tables[5][cell] >> 8) ^ slice_tables[0][slice_tables[5][cell]] & 0xff
+            slice_tables[7][cell] = (slice_tables[6][cell] >> 8) ^ slice_tables[0][slice_tables[6][cell]] & 0xff
+
+    return slice_tables
 
 def gen_table(args: Namespace) -> None:
     """
@@ -112,15 +138,22 @@ def gen_table(args: Namespace) -> None:
     logger.info(" - Type of array elements set to be '%s'" % c_typ_str)
 
     logger.info(" - Generating CRC lookup table...")
-    table = output_table(crc_gen_func(poly=args.poly), args)
+    crc_table = crc_gen_func(poly=args.poly)
     logger.info(" - Successfully generated lookup table!")
+
+    table: StringIO
+    
+    if args.slice4 or args.slice8:
+        crc_tables = gen_slice_table(uint_type=c_typ, t=crc_table, args=args)
 
     if args.output:
         logger.info(" - Printing table to file...")
+        table = output_table(crc_table, args)
         with open(args.output, 'w') as fd:
             table.seek(0)
             copyfileobj(table, fd)
     else:
+        table = output_table(crc_table, args)
         print(table.getvalue())
 
     return  # Success...
@@ -173,6 +206,7 @@ def main() -> tuple[Namespace, Callable[[], None]]:
     form            =   parser.add_argument_group("formatting opts")
 
     col_row_opts    =   form.add_mutually_exclusive_group()
+    slice_opts      =   poly.add_mutually_exclusive_group()
 
     #  Generator polygon specific args
     poly.add_argument("-p", "--polynomial", type=polynomial, metavar="HEX",
@@ -183,6 +217,12 @@ def main() -> tuple[Namespace, Callable[[], None]]:
 
     poly.add_argument("-r", "--reflect-poly", dest="reflected", action="store_true",
                       help="perform right-shift (LSB) operations on polynomial while computing table")
+
+    slice_opts.add_argument("--sb4", dest="slice4", action="store_true",
+                      help="generate 4 lookup tables based on the slicing-by-4 algorithm")
+
+    slice_opts.add_argument("--sb8", dest="slice8", action="store_true",
+                      help="generate 8 lookup tables based on the slicing-by-8 algorithm")
 
     #  Formatting args
     form.add_argument("-c", "--container", metavar="STR", dest="container", choices=['b', 'c'],
