@@ -80,25 +80,25 @@ def rgen_crc(uint_type: type[UnsignedInt], poly) -> Array[UnsignedInt]:
 
     return crc_arr
 
-def gen_slice_table(uint_type: type[UnsignedInt], t: Array[UnsignedInt], args: Namespace) -> SlicedArrays:
+def gen_slice_table(uint_type: type[UnsignedInt], t: Array[UnsignedInt], args: Namespace) -> SlicedTables:
     """
     Function to generate tables for slice-by-4 and slice-by-8 implementations
     """
-    num_tables:   int            = 7 if args.slice8 else 3
-    slice_tables: SlicedArrays = [((uint_type * 256)(*range(256)))] * num_tables
+    num_tables:   int            = 8 if args.slice8 else 4
+    slice_tables: SlicedTables = [((uint_type * 256)(*range(256))) for _ in range(num_tables)]
 
     slice_tables[0] = t
 
     for cell in range(256):
-        slice_tables[1][cell] = (slice_tables[0][cell] >> 8) ^ slice_tables[0][slice_tables[0][cell]] & 0xff
-        slice_tables[2][cell] = (slice_tables[1][cell] >> 8) ^ slice_tables[0][slice_tables[1][cell]] & 0xff
-        slice_tables[3][cell] = (slice_tables[2][cell] >> 8) ^ slice_tables[0][slice_tables[2][cell]] & 0xff
+        slice_tables[1][cell] = (slice_tables[0][cell] >> 8) ^ slice_tables[0][slice_tables[0][cell] & 0xff]
+        slice_tables[2][cell] = (slice_tables[1][cell] >> 8) ^ slice_tables[0][slice_tables[1][cell] & 0xff]
+        slice_tables[3][cell] = (slice_tables[2][cell] >> 8) ^ slice_tables[0][slice_tables[2][cell] & 0xff]
 
-        if num_tables == 7:
-            slice_tables[4][cell] = (slice_tables[3][cell] >> 8) ^ slice_tables[0][slice_tables[3][cell]] & 0xff
-            slice_tables[5][cell] = (slice_tables[4][cell] >> 8) ^ slice_tables[0][slice_tables[4][cell]] & 0xff
-            slice_tables[6][cell] = (slice_tables[5][cell] >> 8) ^ slice_tables[0][slice_tables[5][cell]] & 0xff
-            slice_tables[7][cell] = (slice_tables[6][cell] >> 8) ^ slice_tables[0][slice_tables[6][cell]] & 0xff
+        if num_tables == 8:
+            slice_tables[4][cell] = (slice_tables[3][cell] >> 8) ^ slice_tables[0][slice_tables[3][cell] & 0xff]
+            slice_tables[5][cell] = (slice_tables[4][cell] >> 8) ^ slice_tables[0][slice_tables[4][cell] & 0xff]
+            slice_tables[6][cell] = (slice_tables[5][cell] >> 8) ^ slice_tables[0][slice_tables[5][cell] & 0xff]
+            slice_tables[7][cell] = (slice_tables[6][cell] >> 8) ^ slice_tables[0][slice_tables[6][cell] & 0xff]
 
     return slice_tables
 
