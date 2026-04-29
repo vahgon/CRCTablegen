@@ -189,19 +189,21 @@ def output_table(crc_table: Array[UnsignedInt], args: Namespace) -> StringIO:
     rows        = zip_longest(*[iter(arr_list)] * cr_val, fillvalue=None)
     textio      = StringIO()
 
+    contain_char: list[str] | None = None
+
     if args.container:
-        args.container = { 'b': ["[", "]"], 'c': ["{", "}"] }[args.container]
+        contain_char = { 'b': ["[", "]"], 'c': ["{", "}"] }[args.container]
 
     logger.info(" - Formatting table...")
-    if args.container:
-        textio.writelines(args.container[0] + '\n')
+    if contain_char:
+        textio.writelines(contain_char[0] + '\n')
 
     for row in rows:
         textio.writelines(f'{indent}' + args.sep.join(hex for hex in row if hex is not None))
         textio.writelines(trail_ws + '\n')
 
-    if args.container:
-        textio.writelines(args.container[1])
+    if contain_char:
+        textio.writelines(contain_char[1])
 
     return textio
 
