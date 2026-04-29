@@ -70,6 +70,10 @@ Running `crctablegen.py` without passing any arguments will generate a standard 
 - `-r`, `--reflect-poly` - _Use a LSB implementation for finding table values_
   - _Does not reverse the bits of a polynomial given through_ `--polynomial`, _it simply switches the bitwise shift to use from left to right_
 
+- `--sb8` - _Generates eight tables as seen in slice-by-8 CRC implementations_
+
+- `--sb4` - _Generates four tables as seen in slice-by-4 CRC implementations_
+
 #### Formatting options include:
 
 - `-c`, `--container` - _Encases resulting table in either_ `b`_rackets or_ `c`_urly braces_
